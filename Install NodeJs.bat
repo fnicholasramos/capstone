@@ -1,16 +1,16 @@
 @echo off
-:: Change to a temporary directory
+:: Navigate to the user's Downloads folder
 cd %USERPROFILE%\Downloads
 
-:: Download Node.js installer using curl
+:: Download the Node.js installer using PowerShell
 echo Downloading Node.js installer...
-curl -o nodejs.msi https://nodejs.org/dist/latest/node-vXX.X.X-x64.msi
+curl -o nodejs.msi https://nodejs.org/dist/v20.18.0/node-v20.18.0-x64.msi
 
 :: Install Node.js silently
 echo Installing Node.js...
 msiexec /i nodejs.msi /quiet /norestart
 
-:: Delete installer file after installation
+:: Optionally, delete the installer after installation
 echo Cleaning up...
 del nodejs.msi
 
