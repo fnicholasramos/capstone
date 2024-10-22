@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/orders.css">
+
+    <!-- Montserrat font-->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h2>Doctor's Orders Input</h2>
+
+        <div class="inputs">
+            <div class="searchbar">
+                <span>Search Patients:</span>
+                <input type="text" placeholder="Ex. Ramon Salasalan" class="bar">
+            </div>
+
+            <div class="selected">
+                <span>Selected Patient:  <u>Ramon Nasol</u></span>
+            </div>
+
+            <p class="grey">Input fields</p>
+            <div class="flowrate">
+                <span>Flow Rate <input type="number" min="0" class="three" placeholder="mL/h"></span>
+                <p>The speed at which the IV fluid is administered.</p>
+            </div>
+            <div class="volume">
+                <span>Volume <input type="number" min="0" class="three"placeholder="1000mL"></span>
+                <p>The total amount of fluid to be infused.</p>
+            </div>
+            <div class="driprate">
+                <span>Drip Rate <input type="number" min="0" class="three" placeholder="mL/h"></span>
+                <p>The number of drops per minute.</p>
+            </div>
+
+            <div class="buttons">
+                <span>
+                    <button class="submit">Submit</button>
+                    <button class="clear">Clear</button>
+                </span>
+            </div>
+        </div>
+
+
+    </div>
+</body>
+</html>
