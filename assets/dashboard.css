@@ -5,20 +5,36 @@
     font-family: 'Montserrat';
 }
 
-.sidebar {
-    background-color: #007575;
-    width: 300px;
+.content {
+    display: flex;
+    flex-direction: row;
     height: 100vh;
 }
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: #007575;
+    width: 290px;
+}
+
 
 .top {
     display: flex;
     align-items: center;
+    justify-content: center;
     font-size: 22px;
     font-weight: 700;
     color: #e4e4e4;
+    margin-top: 15px;
     margin-bottom: 70px;
+    margin-left: -5px;
 } 
+
+.top_title {
+    margin-left: -5px;
+}
 
 .doc {
     margin-left: -1px;
@@ -30,8 +46,8 @@ a {
 
 li:hover {
     color: #ffffff;
-    /* background-color: #008b8b; */
-    text-decoration:underline;
+    background-color: #008b8b;
+    /* text-decoration:underline; */
 }
 
 li {
@@ -40,28 +56,45 @@ li {
     font-weight: 500;
     list-style: none;
     margin-bottom: 45px;
+    padding-right: 20px;
+    margin-left: 20px;
+    border-radius: 8px;
 }
 
 .list, li, span{
     display: flex;
     align-items: center;
     margin-left: 5px;
+    
 }
 
+
 .logout, .out {
-    display: flex;
-    align-items: flex-end;
     border: none;
     background-color:  #007575;
     color: #e4e4e4;
     font-size: 22px;
-    height: 50vh;
-    margin-left: 5px;
-    
 }
 
-button:hover {
+.out {
+    margin-left: 10px;
+    margin-bottom: 20px;
+}
+
+.out:hover {
     color: #ffffff;
     text-decoration: underline;
     cursor: pointer;
+}
+
+.info {
+    width: 100%;
+}
+
+.copyright {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    font-size: 11px;
+    margin-bottom: 10px;
 }
