@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/management.css">
+
+     <!-- Montserrat font-->
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+ 
+     <!-- Inter font -->
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container"> 
+        <div class="top">
+            <h2>Patient Management</h2>
+            <button class="newPatient">Add New Patient</button>
+        </div>
+        
+        <div class="searchbar">
+            <span class="search">
+                Search: 
+                <input type="text" placeholder="Ex. Ramon Gemaguin">
+            </span>
+
+            <!-- <span class="sort">
+                <span>Sort by: </span>
+                <select name="roomNum" id="roomNum">
+                    <option value="" disabled selected>Select</option>
+                    <option>Patient Name</option>
+                    <option>Room Number</option>
+                </select>
+            </span> -->
+        </div>
+
+        <div class="table">
+            <table>
+                <!-- header -->
+                <tr>
+                    <th style="text-align: left;">Patient Name</th>
+                    <th style="text-align: left;">Room Number</th>
+                    <th style="text-align: left;">Date of Birth</th>
+                    <th>Actions</th>
+                </tr>
+
+                <tr>
+                    <td>Francis Nicholas Paglinawan Ramos</td>
+                    <td>0001</td>
+                    <td>2003-02-10</td>
+                    <td>Select</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+</body>
+</html>
