@@ -4,86 +4,97 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
-#include <LiquidCrystal_I2C.h> // Use the standard LiquidCrystal_I2C library
+#include <LiquidCrystal_I2C.h>
 #include "HX711.h"
-#include <HTTPClient.h>  // Include HTTPClient for making HTTP requests
 
 // Pin Definitions
 #define DOUT  23
 #define CLK  19
-#define BUZZER 25
+#define BUZZER 26
+#define FLOW_SENSOR_PIN 34  // Pin for the YF-S401 flow sensor
+
+// Flow sensor variables
+volatile int pulseCount = 0;
+const float pulsesPerLiter = 450.0;
+const float mLPerPulse = 1000.0 / pulsesPerLiter;
+const int dropFactor = 20;  // Drop factor for IV tubing in drops/mL
 
 // Create instances
-HX711 scale; // Declare the scale object without parameters
-LiquidCrystal_I2C lcd(0x27, 20, 4); // LCD address and size
+HX711 scale;
+LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 #define BLYNK_PRINT Serial
 
 // Blynk credentials
 char auth[] = "WDrXGLSZPOvFXVTejw7mhVT_vgxjggdp";
-char ssid[] = "PLDTHOMEFIBRhGx23";
-char pass[] = "PLDTWIFItEdna";
+char ssid[] = "pldc";
+char pass[] = "Jrgemaguim05!";
+
+// wifi nila francis
+// char auth[] = "WDrXGLSZPOvFXVTejw7mhVT_vgxjggdp";
+// char ssid[] = "PLDTHOMEFIBRhGx23";
+// char pass[] = "PLDTWIFItEdna";
 
 // wifi nila edrian
 // char ssid[] = "SKYfiberC3E3";
 // char pass[] = "260001003";
-
 // Variables
+
 int liter;
 int val;
-float weight = 0; 
-float calibration_factor = 100000; // Adjust this value for your Load cell sensor
-const int MAX_CAPACITY_ML = 1000; // Maximum capacity of the IV bag in ml
+float weight;
+float calibration_factor = 1500000; 
+const int MAX_CAPACITY_ML = 1000;
+
+void IRAM_ATTR countPulses() {
+  pulseCount++;
+}
 
 void setup() {
-  Serial.begin(115200);
-
-  // Initialize LCD
+  Serial.begin(9600);
   lcd.init();
   lcd.backlight();
-  
-  // Initialize Buzzer
   pinMode(BUZZER, OUTPUT);
+  pinMode(FLOW_SENSOR_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), countPulses, RISING);
   
-  // Initialize HX711 with pins
-  scale.begin(DOUT, CLK);  // Use the begin() method to set the DOUT and CLK pins
+  scale.begin(DOUT, CLK);
   scale.set_scale();
-  scale.tare(); // Reset the scale to 0
+  scale.tare();
   
-  long zero_factor = scale.read_average(); // Get a baseline reading
+  long zero_factor = scale.read_average();
   Serial.print("Zero factor: ");
   Serial.println(zero_factor);
 
-  // Connect to Blynk
-  Blynk.begin(auth, ssid, pass); 
+  Blynk.begin(auth, ssid, pass);
 }
 
 void loop() {
-  Blynk.run(); // Run Blynk
-  measureweight(); // Measure weight
+  Blynk.run();
+  measureWeight();
+  measureFlowRate();
 }
 
-void measureweight() {
-  scale.set_scale(calibration_factor); // Adjust to this calibration factor
-  weight = scale.get_units(10); 
+void measureWeight() {
+  scale.set_scale(calibration_factor);
+  weight = scale.get_units(5);
   
   if (weight < 0) {
     weight = 0.00;
   }
   
   liter = weight * 1000;
-  // Ensure the IV bottle capacity does not exceed the maximum
   if (liter > MAX_CAPACITY_ML) {
     liter = MAX_CAPACITY_ML;
   }
   
-  val = map(liter, 0, MAX_CAPACITY_ML, 0, 100); // Map liter to percentage
+  val = map(liter, 0, MAX_CAPACITY_ML, 0, 100);
 
   lcd.clear();
   lcd.setCursor(1, 0);
-  lcd.print("      BOMBA");
+  lcd.print("IOT Based IV Bag");
   lcd.setCursor(2, 1);
-  lcd.print("      NA!!!");
+  lcd.print("Monitoring System");
 
   Serial.print("Kilogram: ");
   Serial.print(weight); 
@@ -107,73 +118,39 @@ void measureweight() {
   Serial.print(val);
   Serial.println("%");
 
-  sendDataToServer(liter, val);  // Add this line to send the data to your server
-
   delay(500);
 
   if (val <= 50 && val >= 40) {
     Blynk.logEvent("iv_alert", "IV Bottle is 50%");
-    digitalWrite(BUZZER, HIGH);
-    delay(50);
-    digitalWrite(BUZZER, LOW);
-    delay(50);
-  } else if (val <= 20) {
+    for (int i = 0; i < 5; i++) {
+      digitalWrite(BUZZER, HIGH);
+      delay(100);
+      digitalWrite(BUZZER, LOW);
+      delay(100);
+    }
+  } else if (val <= 20 && val >= 6) {
     Blynk.logEvent("iv_alert", "IV Bottle is too LOW");
-    digitalWrite(BUZZER, HIGH);
+    digitalWrite(BUZZER, HIGH);  // Continuous sound for critical alert
   } else {
-    digitalWrite(BUZZER, LOW);
+    digitalWrite(BUZZER, LOW);    // No sound if above alert levels
   }
 
   Blynk.virtualWrite(V0, liter);
   Blynk.virtualWrite(V1, val);
 }
 
-void sendDataToServer(int liter, int val) {
-  if(WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi not connected :(");
-  } else {
-    Serial.println("WIFI CONNECTED !!!");
+void measureFlowRate() {
+  pulseCount = 0;
+  delay(1000);  // Measure for 1 second
+  int pulseCountSnapshot = pulseCount;
 
-    HTTPClient http;
+  // Map pulse count directly to 0-100 range for flow rate in mL/h
+  int flowRate = map(pulseCountSnapshot, 0, 100, 0, 100);  // Adjust these ranges to fit your sensor
 
-    Serial.println("Connecting to server...");
+  // Output flow rate information to Serial Monitor
+  Serial.print("Flow Rate (mL/h): ");
+  Serial.println(flowRate);
 
-    // Ensure this matches your server's URL and endpoint
-    http.begin("http://192.168.1.3:3000/data"); 
-
-    // Set a timeout for the HTTP request (5 seconds)
-    http.setTimeout(5000); // 5 seconds timeout
-
-    // Specify the content type as JSON
-    http.addHeader("Content-Type", "application/json");
-
-    // Create a JSON payload with the values you want to send
-    String payload = "{\"liter\":" + String(liter) + ",\"percent\":" + String(val) + "}";
-    // String payload = "{\"liter\":500,\"percent\":50}";
-
-
-    // Send the POST request
-    int httpResponseCode = http.POST(payload);
-
-    // Print the response code to the Serial Monitor
-    Serial.print("HTTP Response Code: ");
-    Serial.println(httpResponseCode); 
-    Serial.println(WiFi.localIP());
-
-    // Check the response
-    if (httpResponseCode > 0) {
-      String response = http.getString();  // Get the response from the server
-      Serial.println("Response: " + response);  // Print the response
-    } else {
-      // Print more descriptive error message
-      Serial.print("Error on sending POST: ");
-      Serial.println(http.errorToString(httpResponseCode).c_str());  // Descriptive error message
-    }
-
-    // Free resources
-    http.end();  
-  }
+  // Send flow rate data to Blynk's V3 pin
+  Blynk.virtualWrite(V3, flowRate);  // Flow rate in mL/h (mapped to 0-100)
 }
-
-
-
