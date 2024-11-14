@@ -6,6 +6,7 @@
 #include <BlynkSimpleEsp32.h>
 #include <LiquidCrystal_I2C.h>
 #include "HX711.h"
+#include <HTTPClient.h>
 
 // Pin Definitions
 #define DOUT  23
@@ -26,20 +27,13 @@ LiquidCrystal_I2C lcd(0x27, 20, 4);
 #define BLYNK_PRINT Serial
 
 // Blynk credentials
-char auth[] = "WDrXGLSZPOvFXVTejw7mhVT_vgxjggdp";
-char ssid[] = "pldc";
-char pass[] = "Jrgemaguim05!";
-
 // wifi nila francis
-// char auth[] = "WDrXGLSZPOvFXVTejw7mhVT_vgxjggdp";
-// char ssid[] = "PLDTHOMEFIBRhGx23";
-// char pass[] = "PLDTWIFItEdna";
+char auth[] = "WDrXGLSZPOvFXVTejw7mhVT_vgxjggdp";
+char ssid[] = "PLDTHOMEFIBRhGx23";
+char pass[] = "PLDTWIFItEdna";
 
-// wifi nila edrian
-// char ssid[] = "SKYfiberC3E3";
-// char pass[] = "260001003";
+
 // Variables
-
 int liter;
 int val;
 float weight;
@@ -118,6 +112,8 @@ void measureWeight() {
   Serial.print(val);
   Serial.println("%");
 
+  sendDataToServer(liter, val); // send the data to your server
+
   delay(500);
 
   if (val <= 50 && val >= 40) {
@@ -153,4 +149,44 @@ void measureFlowRate() {
 
   // Send flow rate data to Blynk's V3 pin
   Blynk.virtualWrite(V3, flowRate);  // Flow rate in mL/h (mapped to 0-100)
+}
+
+void sendDataToServer(int liter, int val) {
+  if(WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi not connected :(");
+  } else {
+    Serial.println("WIFI CONNECTED !!!");
+    HTTPClient http;
+    Serial.println("Connecting to server...");
+
+
+    http.begin("http://192.168.1.13/capstone/server.php"); 
+    http.setTimeout(5000); // 5 seconds timeout
+    http.addHeader("Content-Type", "application/json");
+
+    // mac address as deviceID
+    // String deviceID = WiFi.macAddress();
+
+    String deviceID = "pt0001";
+    String payload = "{\"device_id\":\"" + deviceID + "\",\"liter\":" + String(liter) + ",\"percent\":" + String(val) + "}";
+
+    // String payload = "{\"liter\":500,\"percent\":50}"; (debugger)
+    // Send the POST request
+    int httpResponseCode = http.POST(payload);
+    // Print the response code to the Serial Monitor
+    Serial.print("HTTP Response Code: ");
+    Serial.println(httpResponseCode); 
+    Serial.println(WiFi.localIP());
+    // Check the response
+    if (httpResponseCode > 0) {
+      String response = http.getString();  // Get the response from the server
+      Serial.println("Response: " + response);  // Print the response
+    } else {
+      // Print more descriptive error message
+      Serial.print("Error on sending POST: ");
+      Serial.println(http.errorToString(httpResponseCode).c_str());  // Descriptive error message
+    }
+    // Free resources
+    http.end();  
+  }
 }
