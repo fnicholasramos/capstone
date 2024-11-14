@@ -24,13 +24,14 @@ if ($conn->connect_error) {
 // Read and parse the incoming POST request
 $data = json_decode(file_get_contents("php://input"), true);
 
-if (isset($data['liter']) && isset($data['percent'])) {
+if (isset($data['device_id']) && isset($data['liter']) && isset($data['percent'])) {
+    $device_id = $data['device_id'];
     $liter = $data['liter'];
     $percent = $data['percent'];
 
-    // Prepare the SQL query to insert data into the database
-    $stmt = $conn->prepare("INSERT INTO iv_data (liter, percent) VALUES (?, ?)");
-    $stmt->bind_param("dd", $liter, $percent);
+    // Use an INSERT ... ON DUPLICATE KEY UPDATE query to maintain a single row per device
+    $stmt = $conn->prepare("INSERT INTO iv_data (device_id, liter, percent) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE liter = VALUES(liter), percent = VALUES(percent)");
+    $stmt->bind_param("sii", $device_id, $liter, $percent);
 
     if ($stmt->execute()) {
         echo json_encode(["message" => "Data received!"]);
