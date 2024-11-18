@@ -160,7 +160,7 @@ void sendDataToServer(int liter, int val) {
     Serial.println("Connecting to server...");
 
 
-    http.begin("http://192.168.1.13/capstone/server.php"); 
+    http.begin("http://192.168.1.11/capstone/server.php"); 
     http.setTimeout(5000); // 5 seconds timeout
     http.addHeader("Content-Type", "application/json");
 
