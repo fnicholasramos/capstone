@@ -12,13 +12,6 @@
 #define DOUT  23
 #define CLK  19
 #define BUZZER 26
-#define FLOW_SENSOR_PIN 34  // Pin for the YF-S401 flow sensor
-
-// Flow sensor variables
-volatile int pulseCount = 0;
-const float pulsesPerLiter = 450.0;
-const float mLPerPulse = 1000.0 / pulsesPerLiter;
-const int dropFactor = 20;  // Drop factor for IV tubing in drops/mL
 
 // Create instances
 HX711 scale;
@@ -28,9 +21,13 @@ LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 // Blynk credentials
 // wifi nila francis
+// char auth[] = "WDrXGLSZPOvFXVTejw7mhVT_vgxjggdp";
+// char ssid[] = "PLDTHOMEFIBRhGx23";
+// char pass[] = "PLDTWIFItEdna";
+
 char auth[] = "WDrXGLSZPOvFXVTejw7mhVT_vgxjggdp";
-char ssid[] = "PLDTHOMEFIBRhGx23";
-char pass[] = "PLDTWIFItEdna";
+char ssid[] = "pokoloko";
+char pass[] = "12345678";
 
 
 // Variables
@@ -40,17 +37,11 @@ float weight;
 float calibration_factor = 1500000; 
 const int MAX_CAPACITY_ML = 1000;
 
-void IRAM_ATTR countPulses() {
-  pulseCount++;
-}
-
 void setup() {
   Serial.begin(9600);
   lcd.init();
   lcd.backlight();
   pinMode(BUZZER, OUTPUT);
-  pinMode(FLOW_SENSOR_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), countPulses, RISING);
   
   scale.begin(DOUT, CLK);
   scale.set_scale();
@@ -66,7 +57,6 @@ void setup() {
 void loop() {
   Blynk.run();
   measureWeight();
-  measureFlowRate();
 }
 
 void measureWeight() {
@@ -86,9 +76,9 @@ void measureWeight() {
 
   lcd.clear();
   lcd.setCursor(1, 0);
-  lcd.print("IOT Based IV Bag");
+  lcd.print("   Health Guard");
   lcd.setCursor(2, 1);
-  lcd.print("Monitoring System");
+  lcd.print("");
 
   Serial.print("Kilogram: ");
   Serial.print(weight); 
@@ -117,15 +107,15 @@ void measureWeight() {
   delay(500);
 
   if (val <= 50 && val >= 40) {
-    Blynk.logEvent("iv_alert", "IV Bottle is 50%");
+    Blynk.logEvent("iv_alert", "IVF Volume is 50%");
     for (int i = 0; i < 5; i++) {
       digitalWrite(BUZZER, HIGH);
       delay(100);
       digitalWrite(BUZZER, LOW);
       delay(100);
     }
-  } else if (val <= 20 && val >= 6) {
-    Blynk.logEvent("iv_alert", "IV Bottle is too LOW");
+  } else if (val <= 10 && val >= 1) {
+    Blynk.logEvent("iv_alert", "IVF Volume is too LOW");
     digitalWrite(BUZZER, HIGH);  // Continuous sound for critical alert
   } else {
     digitalWrite(BUZZER, LOW);    // No sound if above alert levels
@@ -133,22 +123,6 @@ void measureWeight() {
 
   Blynk.virtualWrite(V0, liter);
   Blynk.virtualWrite(V1, val);
-}
-
-void measureFlowRate() {
-  pulseCount = 0;
-  delay(1000);  // Measure for 1 second
-  int pulseCountSnapshot = pulseCount;
-
-  // Map pulse count directly to 0-100 range for flow rate in mL/h
-  int flowRate = map(pulseCountSnapshot, 0, 100, 0, 100);  // Adjust these ranges to fit your sensor
-
-  // Output flow rate information to Serial Monitor
-  Serial.print("Flow Rate (mL/h): ");
-  Serial.println(flowRate);
-
-  // Send flow rate data to Blynk's V3 pin
-  Blynk.virtualWrite(V3, flowRate);  // Flow rate in mL/h (mapped to 0-100)
 }
 
 void sendDataToServer(int liter, int val) {
@@ -160,33 +134,26 @@ void sendDataToServer(int liter, int val) {
     Serial.println("Connecting to server...");
 
 
-    http.begin("http://192.168.1.11/capstone/server.php"); 
+    // http.begin("https://healthguardiv.site/admin/server.php"); 
+    http.begin("http://192.168.1.16/capstone/server.php");
     http.setTimeout(5000); // 5 seconds timeout
     http.addHeader("Content-Type", "application/json");
-
-    // mac address as deviceID
-    // String deviceID = WiFi.macAddress();
 
     String deviceID = "pt0001";
     String payload = "{\"device_id\":\"" + deviceID + "\",\"liter\":" + String(liter) + ",\"percent\":" + String(val) + "}";
 
-    // String payload = "{\"liter\":500,\"percent\":50}"; (debugger)
-    // Send the POST request
     int httpResponseCode = http.POST(payload);
-    // Print the response code to the Serial Monitor
     Serial.print("HTTP Response Code: ");
     Serial.println(httpResponseCode); 
     Serial.println(WiFi.localIP());
-    // Check the response
+
     if (httpResponseCode > 0) {
-      String response = http.getString();  // Get the response from the server
-      Serial.println("Response: " + response);  // Print the response
+      String response = http.getString(); 
+      Serial.println("Response: " + response);  
     } else {
-      // Print more descriptive error message
       Serial.print("Error on sending POST: ");
-      Serial.println(http.errorToString(httpResponseCode).c_str());  // Descriptive error message
+      Serial.println(http.errorToString(httpResponseCode).c_str());
     }
-    // Free resources
     http.end();  
   }
 }

@@ -7,10 +7,10 @@ error_reporting(E_ALL);
 header("Content-Type: application/json");
 
 // Database connection settings
-$servername = "localhost";
-$username = "root";
-$password = "";
-$database = "capstone";
+$servername = "154.41.240.52";
+$username = "u755542063_root";
+$password = "Hidden_cookie1";
+$database = "u755542063_capstone";
 
 $conn = new mysqli($servername, $username, $password, $database);
 
